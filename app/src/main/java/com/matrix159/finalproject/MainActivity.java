@@ -10,17 +10,18 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-public class LoginMenu extends AppCompatActivity
+public class MainActivity extends AppCompatActivity
 {
 
-    public final static String TAG = "LoginMenu";
+    public final static String TAG = "MainActivity";
 
+    DatabaseReference topRef;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.login_menu);
+        setContentView(R.layout.activity_main);
 
 
         // Write a message to the database
