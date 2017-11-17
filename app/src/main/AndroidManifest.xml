@@ -31,21 +31,15 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_key"/>
+            android:value="AIzaSyCdKiyCfdGP7T_ivz9JEdX1xaPxinjtmVY"/>
+
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity
-            android:name=".MapsActivity"
-            android:label="@string/title_activity_maps"/>
-        <activity
             android:name=".AddItemsActivity"
             android:label="@string/title_activity_add_items"
-            android:theme="@style/AppTheme.NoActionBar"/>
-        <activity
-            android:name=".TripActivity"
-            android:label="@string/title_activity_trip"
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".SetupTripActivity"
@@ -58,10 +52,14 @@
         <activity
             android:name=".SignUpActivity"
             android:label="@string/title_activity_sign_up"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:parentActivityName="com.matrix159.finalproject.LoginActivity">
+            android:parentActivityName=".LoginActivity"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
-
+        <activity
+            android:name=".AddLocationActivity"
+            android:label="@string/title_activity_add_location"
+            android:theme="@style/AppTheme">
+        </activity>
     </application>
 
 </manifest>

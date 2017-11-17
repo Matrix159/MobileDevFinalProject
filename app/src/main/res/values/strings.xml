@@ -17,4 +17,5 @@
     <string name="verify_password">Verify Password</string>
     <string name="sign_up">Sign Up</string>
     <string name="incorrect_password">Invalid password or username.</string>
+    <string name="title_activity_add_location">AddLocationActivity</string>
 </resources>

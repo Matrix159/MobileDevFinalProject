@@ -56,6 +56,7 @@ public class LoginActivity extends AppCompatActivity
     public void onResume()
     {
         super.onResume();
+        // If user is already logged in go to Main Activity.
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null)
         {
@@ -96,6 +97,7 @@ public class LoginActivity extends AppCompatActivity
                 {
                     if (task.isSuccessful())
                     {
+                        // If we successfully signed in, go to Main Activity, passing email
                         Intent toMain = new Intent(this, MainActivity.class);
                         toMain.putExtra("email", emailStr);
                         startActivity(toMain);
