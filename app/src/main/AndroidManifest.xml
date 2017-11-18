@@ -60,6 +60,12 @@
             android:label="@string/title_activity_add_location"
             android:theme="@style/AppTheme">
         </activity>
+
+        <service
+            android:name=".services.GeofenceService"
+            android:enabled="true"
+            android:exported="true">
+        </service>
     </application>
 
 </manifest>

@@ -1,21 +1,32 @@
 package com.matrix159.finalproject;
 
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -26,8 +37,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public final static String TAG = "MainActivity";
     private GoogleMap mMap;
     private DatabaseReference topRef;
+    private GeofencingClient mGeofencingClient;
+    private List<Geofence> geofenceList = new ArrayList<>();
+    private FusedLocationProviderClient mFusedLocationClient;
+    double lat;
+    double lng;
     @BindView(R.id.toolbar)
     Toolbar toolbar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -45,9 +62,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         // Read from the database
-        myRef.addValueEventListener(new ValueEventListener() {
+        myRef.addValueEventListener(new ValueEventListener()
+        {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            public void onDataChange(DataSnapshot dataSnapshot)
+            {
                 // This method is called once with the initial value and again
                 // whenever data at this location is updated.
                 String value = dataSnapshot.getValue(String.class);
@@ -55,15 +74,54 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             @Override
-            public void onCancelled(DatabaseError error) {
+            public void onCancelled(DatabaseError error)
+            {
                 // Failed to read value
                 Log.w(TAG, "Failed to read value.", error.toException());
             }
         });
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+        {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+
+        mGeofencingClient = LocationServices.getGeofencingClient(this);
+        mFusedLocationClient.getLastLocation().addOnSuccessListener(this, location ->
+        {
+            // Got last known location. In some rare situations this can be null.
+            if (location != null) {
+                lat = location.getLatitude();
+                lng = location.getLongitude();
+                geofenceList.add(new Geofence.Builder()
+                        // Set the request ID of the geofence. This is a string to identify this
+                        // geofence.
+                        .setRequestId("test")
+
+                        .setCircularRegion(
+                                lat,
+                                lng,
+                                50
+                        )
+                        .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+                                Geofence.GEOFENCE_TRANSITION_EXIT)
+                        .build());
+                SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.map);
+                mapFragment.getMapAsync(this);
+            }
+        });
+
     }
     /**
      * Manipulates the map once available.
@@ -80,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
+        LatLng sydney = new LatLng(lat, lng);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
