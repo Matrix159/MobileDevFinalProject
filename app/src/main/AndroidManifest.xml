@@ -46,10 +46,6 @@
             android:label="@string/title_activity_setup_trip"
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity
-            android:name=".ListActivity"
-            android:label="@string/title_activity_list"
-            android:theme="@style/AppTheme.NoActionBar"/>
-        <activity
             android:name=".SignUpActivity"
             android:label="@string/title_activity_sign_up"
             android:parentActivityName=".LoginActivity"
