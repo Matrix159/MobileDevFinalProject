@@ -1,9 +1,9 @@
 package com.matrix159.finalproject;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -20,8 +20,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 
-public class LoginActivity extends AppCompatActivity
-{
+public class LoginActivity extends AppCompatActivity {
 
     private static final Pattern EMAIL_REGEX = Pattern.compile(
             "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$",
@@ -40,8 +39,7 @@ public class LoginActivity extends AppCompatActivity
     Animation shake;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
@@ -53,13 +51,11 @@ public class LoginActivity extends AppCompatActivity
     }
 
     @Override
-    public void onResume()
-    {
+    public void onResume() {
         super.onResume();
         // If user is already logged in go to Main Activity.
         FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null)
-        {
+        if (user != null) {
             Intent toMain = new Intent(this, MainActivity.class);
             startActivity(toMain);
             finish();
@@ -68,24 +64,20 @@ public class LoginActivity extends AppCompatActivity
     }
 
     @OnClick(R.id.signup)
-    public void signUp()
-    {
+    public void signUp() {
         Intent intent = new Intent(LoginActivity.this, SignUpActivity.class);
         startActivity(intent);
     }
 
     @OnClick(R.id.signin)
-    public void verify()
-    {
+    public void verify() {
         String emailStr = email.getText().toString();
-        if (emailStr.length() == 0)
-        {
+        if (emailStr.length() == 0) {
             Snackbar.make(email, R.string.email_required,
                     Snackbar.LENGTH_LONG).show();
             return;
         }
-        if (!EMAIL_REGEX.matcher(emailStr).find())
-        {
+        if (!EMAIL_REGEX.matcher(emailStr).find()) {
             Snackbar.make(email, R.string.incorrect_email,
                     Snackbar.LENGTH_LONG).show();
             return;
@@ -95,16 +87,14 @@ public class LoginActivity extends AppCompatActivity
         mAuth.signInWithEmailAndPassword(emailStr, passStr)
                 .addOnCompleteListener(this, task ->
                 {
-                    if (task.isSuccessful())
-                    {
+                    if (task.isSuccessful()) {
                         // If we successfully signed in, go to Main Activity, passing email
                         Intent toMain = new Intent(this, MainActivity.class);
                         toMain.putExtra("email", emailStr);
                         startActivity(toMain);
                         finish();
                     }
-                    else
-                    {
+                    else {
                         signin.startAnimation(shake);
                         Snackbar.make(email, R.string.incorrect_password,
                                 Snackbar.LENGTH_LONG)

@@ -7,6 +7,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
+/**
+ * Use this activity to map a list of items to a location?
+ */
 public class SetupTripActivity extends AppCompatActivity {
 
     @Override

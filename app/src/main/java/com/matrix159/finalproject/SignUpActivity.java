@@ -2,12 +2,10 @@ package com.matrix159.finalproject;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
@@ -26,10 +24,14 @@ public class SignUpActivity extends AppCompatActivity {
             "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$",
             Pattern.CASE_INSENSITIVE);
 
-    @BindView(R.id.email_input) EditText email;
-    @BindView(R.id.password_input) EditText password;
-    @BindView(R.id.verify_pass_input) EditText verifyPassword;
-    @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.email_input)
+    EditText email;
+    @BindView(R.id.password_input)
+    EditText password;
+    @BindView(R.id.verify_pass_input)
+    EditText verifyPassword;
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
     Animation shake;
 
     private FirebaseAuth mAuth;
@@ -77,7 +79,8 @@ public class SignUpActivity extends AppCompatActivity {
                 intent.putExtra("email", emailStr);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
-            } else {
+            }
+            else {
                 String msg = task.getException().getMessage();
                 Snackbar.make(email, msg, Snackbar.LENGTH_SHORT).show();
             }

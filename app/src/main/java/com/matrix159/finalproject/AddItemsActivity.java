@@ -6,7 +6,9 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
-
+/**
+ * We will use this class to add items to our "global" item list.
+ */
 public class AddItemsActivity extends AppCompatActivity {
 
     @Override
