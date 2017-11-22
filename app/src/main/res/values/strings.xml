@@ -18,4 +18,7 @@
     <string name="sign_up">Sign Up</string>
     <string name="incorrect_password">Invalid password or username.</string>
     <string name="title_activity_add_location">AddLocationActivity</string>
+    <string name="edit_items_activity_welcome">Current trip items</string>
+    <string name="add_items">Add Item</string>
+
 </resources>

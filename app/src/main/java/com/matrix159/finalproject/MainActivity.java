@@ -1,6 +1,7 @@
 package com.matrix159.finalproject;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
@@ -9,6 +10,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.widget.Button;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
@@ -59,6 +61,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
+
+        Button editItemsButton = this.findViewById(R.id.editItems);
+        editItemsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, AddItemsActivity.class);
+            startActivity(intent);
+        });
 
         mAuth = FirebaseAuth.getInstance();
         // Write a message to the database
@@ -179,6 +187,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.addCircle(circleOptions);
         mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
     }
+
 
     // Life cycle methods below
     @Override
