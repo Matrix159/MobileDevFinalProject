@@ -43,13 +43,15 @@ public class SignUpActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
         // Get a support ActionBar corresponding to this toolbar
-        ActionBar ab = getSupportActionBar();
+
 
         // Enable the Up button
-        ab.setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+
         mAuth = FirebaseAuth.getInstance();
         shake = AnimationUtils.loadAnimation(this, R.anim.shake);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
     }
 
     @OnClick(R.id.signup_button)

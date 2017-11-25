@@ -12,10 +12,13 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.widget.Button;
 
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -37,11 +40,13 @@ import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     public final static String TAG = "MainActivity";
     private static final int PERMISSION_REQUEST = 1;
+    private static final int LOCATION_REQUEST = 2;
     private GoogleMap mMap;
     private FirebaseAuth mAuth;
     private DatabaseReference topRef;
@@ -121,6 +126,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
+    @OnClick(R.id.main_add_location)
+    public void mainAddLocation() {
+        Intent intent = new Intent(this, AddLocationActivity.class);
+        startActivityForResult(intent, LOCATION_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == LOCATION_REQUEST) {
+            if (resultCode == RESULT_OK) {
+
+                Bundle bundle = data.getExtras();
+                try{
+                    double lat = Double.parseDouble(bundle.getString("LATITUDE"));
+                    double lng = Double.parseDouble(bundle.getString("LONGITUDE"));
+                    LatLng marker = new LatLng(lat, lng);
+                    mMap.addMarker(new MarkerOptions().position(marker).title(currentGeofence.getRequestId()));
+                    mMap.moveCamera(CameraUpdateFactory.newLatLng(marker));
+                    CircleOptions circleOptions = new CircleOptions()
+                            .center(marker)
+                            .radius(10)
+                            .fillColor(Color.GREEN)
+                            .strokeColor(Color.TRANSPARENT)
+                            .strokeWidth(2);
+                    mMap.addCircle(circleOptions);
+                    mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+                } catch(Exception ex) {
+                    ex.printStackTrace();
+                }
+            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+                Status status = PlaceAutocomplete.getStatus(this, data);
+                Log.i(TAG, status.getStatusMessage());
+            } else if (resultCode == RESULT_CANCELED) {
+                // The user canceled the operation.
+            }
+        }
+    }
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
