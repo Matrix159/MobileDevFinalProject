@@ -17,10 +17,10 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CircleOptions;
@@ -76,11 +76,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mAuth = FirebaseAuth.getInstance();
         // Write a message to the database
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference(mAuth.getUid());
+        topRef = database.getReference(mAuth.getUid());
 
 
         // Read from the database
-        myRef.addValueEventListener(new ValueEventListener() {
+        topRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // This method is called once with the initial value and again
@@ -106,24 +106,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         mGeofencingClient = LocationServices.getGeofencingClient(this);
-        mFusedLocationClient.getLastLocation().addOnSuccessListener(this, location ->
-        {
-            // Got last known location. In some rare situations this can be null.
-            if (location != null) {
-                lat = location.getLatitude();
-                lng = location.getLongitude();
-                geofenceList.add(getGeofence("locationName", lat, lng, 5));
-                currentGeofence = geofenceList.get(0);
-                SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                        .findFragmentById(R.id.map);
-                mapFragment.getMapAsync(this);
-                Map<String, Object> userUpdates = new HashMap<>();
-                userUpdates.put("lat", lat);
-                userUpdates.put("lng", lng);
-                myRef.child("locationName").updateChildren(userUpdates);
-            }
-        });
-
+        MapFragment mapFragment = (MapFragment) getFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
     }
 
     @OnClick(R.id.main_add_location)
@@ -132,6 +117,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         startActivityForResult(intent, LOCATION_REQUEST);
     }
 
+    @OnClick(R.id.build_location_button)
+    public void buildLocation() {
+        Intent intent = new Intent(this, SetupTripActivity.class);
+        startActivity(intent);
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == LOCATION_REQUEST) {
@@ -217,17 +207,32 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        LatLng marker = new LatLng(lat, lng);
-        mMap.addMarker(new MarkerOptions().position(marker).title(currentGeofence.getRequestId()));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(marker));
-        CircleOptions circleOptions = new CircleOptions()
-                .center(marker)
-                .radius(5)
-                .fillColor(Color.GREEN)
-                .strokeColor(Color.TRANSPARENT)
-                .strokeWidth(2);
-        mMap.addCircle(circleOptions);
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+        mFusedLocationClient.getLastLocation().addOnSuccessListener(this, location ->
+        {
+            // Got last known location. In some rare situations this can be null.
+            if (location != null) {
+                lat = location.getLatitude();
+                lng = location.getLongitude();
+                geofenceList.add(getGeofence("locationName", lat, lng, 5));
+                currentGeofence = geofenceList.get(0);
+                LatLng marker = new LatLng(lat, lng);
+                mMap.addMarker(new MarkerOptions().position(marker).title(currentGeofence.getRequestId()));
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(marker));
+                CircleOptions circleOptions = new CircleOptions()
+                        .center(marker)
+                        .radius(5)
+                        .fillColor(Color.GREEN)
+                        .strokeColor(Color.TRANSPARENT)
+                        .strokeWidth(2);
+                mMap.addCircle(circleOptions);
+                mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+                Map<String, Object> userUpdates = new HashMap<>();
+                userUpdates.put("lat", lat);
+                userUpdates.put("lng", lng);
+                topRef.child("locationName").updateChildren(userUpdates);
+            }
+        });
+
     }
 
 
