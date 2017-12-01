@@ -1,11 +1,13 @@
 package com.matrix159.finalproject;
 
 import android.Manifest;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -26,6 +28,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -42,17 +46,23 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, OnCompleteListener<Void> {
 
-    public final static String TAG = "MainActivity";
+    public final static String TAG = MainActivity.class.getSimpleName();
     private static final int PERMISSION_REQUEST = 1;
     private static final int LOCATION_REQUEST = 2;
     private GoogleMap mMap;
-    private FirebaseAuth mAuth;
+    private FirebaseAuth auth;
     private DatabaseReference topRef;
-    private GeofencingClient mGeofencingClient;
-    private List<Geofence> geofenceList = new ArrayList<>();
-    private FusedLocationProviderClient mFusedLocationClient;
+    private GeofencingClient geofencingClient;
+    private List<Geofence> geofenceList;
+    private FusedLocationProviderClient locationClient;
+    private enum PendingGeofenceTask {
+        ADD, REMOVE, NONE
+    }
+    /** Used when requesting to add or remove geofences */
+    private PendingIntent mGeofencePendingIntent;
+    private PendingGeofenceTask mPendingGeofenceTask = PendingGeofenceTask.NONE;
     private Geofence currentGeofence;
     double lat;
     double lng;
@@ -73,12 +83,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             startActivity(intent);
         });
 
-        mAuth = FirebaseAuth.getInstance();
+        geofenceList = new ArrayList<>();
+        // Initially set the PendingIntent used in addGeofences() and removeGeofences() to null.
+        mGeofencePendingIntent = null;
+
+        auth = FirebaseAuth.getInstance();
         // Write a message to the database
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        topRef = database.getReference(mAuth.getUid());
-
-
+        topRef = database.getReference(auth.getUid());
         // Read from the database
         topRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -97,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
 
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        locationClient = LocationServices.getFusedLocationProviderClient(this);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST);
@@ -105,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }
 
-        mGeofencingClient = LocationServices.getGeofencingClient(this);
+        geofencingClient = LocationServices.getGeofencingClient(this);
         MapFragment mapFragment = (MapFragment) getFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -162,8 +174,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    mGeofencingClient = LocationServices.getGeofencingClient(this);
-                    mFusedLocationClient.getLastLocation().addOnSuccessListener(this, location ->
+                    geofencingClient = LocationServices.getGeofencingClient(this);
+                    locationClient.getLastLocation().addOnSuccessListener(this, location ->
                     {
                         // Got last known location. In some rare situations this can be null.
                         if (location != null) {
@@ -207,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        mFusedLocationClient.getLastLocation().addOnSuccessListener(this, location ->
+        locationClient.getLastLocation().addOnSuccessListener(this, location ->
         {
             // Got last known location. In some rare situations this can be null.
             if (location != null) {
@@ -262,4 +274,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onResume();
     }
 
+    @Override
+    public void onComplete(@NonNull Task<Void> task) {
+
+    }
 }

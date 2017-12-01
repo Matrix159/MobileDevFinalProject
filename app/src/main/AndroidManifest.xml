@@ -52,11 +52,6 @@
             android:parentActivityName=".MainActivity">
         </activity>
 
-        <service
-            android:name=".services.GeofenceService"
-            android:enabled="true"
-            android:exported="true">
-        </service>
     </application>
 
 </manifest>
