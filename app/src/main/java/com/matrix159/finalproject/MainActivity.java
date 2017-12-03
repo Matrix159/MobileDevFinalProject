@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.widget.Button;
@@ -51,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public final static String TAG = MainActivity.class.getSimpleName();
     private static final int PERMISSION_REQUEST = 1;
     private static final int LOCATION_REQUEST = 2;
+    static final int MAKE_ITEM_LIST = 3;
     private GoogleMap mMap;
     private FirebaseAuth auth;
     private DatabaseReference topRef;
@@ -64,10 +67,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private PendingIntent mGeofencePendingIntent;
     private PendingGeofenceTask mPendingGeofenceTask = PendingGeofenceTask.NONE;
     private Geofence currentGeofence;
+    private ArrayList<String> items = new ArrayList<>();
     double lat;
     double lng;
     @BindView(R.id.toolbar)
     Toolbar toolbar;
+    @BindView(R.id.recyclerView)
+    RecyclerView itemsRecycler;
+    LinearLayoutManager layoutManager;
+    ItemAdapter myAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,11 +85,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
 
-        Button editItemsButton = this.findViewById(R.id.editItems);
-        editItemsButton.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, AddItemsActivity.class);
-            startActivity(intent);
-        });
+        items.add("Hello");
+        items.add("Hello");
+        items.add("Hello");
+        items.add("Hello");
+        items.add("Hello");
+
+        //Set up the recycler view
+        layoutManager = new LinearLayoutManager(this);
+        itemsRecycler.setLayoutManager(layoutManager);
+        myAdapter = new ItemAdapter(items);
+        itemsRecycler.setAdapter(myAdapter);
 
         geofenceList = new ArrayList<>();
         // Initially set the PendingIntent used in addGeofences() and removeGeofences() to null.
@@ -123,6 +137,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
     }
 
+    @OnClick(R.id.editItems)
+    public void editItems() {
+        Intent intent = new Intent(MainActivity.this, AddItemsActivity.class);
+        startActivityForResult(intent, MAKE_ITEM_LIST);
+    }
+
     @OnClick(R.id.main_add_location)
     public void mainAddLocation() {
         Intent intent = new Intent(this, AddLocationActivity.class);
@@ -136,6 +156,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Returned from making list of items
+        if (resultCode == MAKE_ITEM_LIST){
+            items = data.getStringArrayListExtra("RecyclerItems");
+            //myAdapter.notifyDataSetChanged();
+            myAdapter = new ItemAdapter(items);
+            itemsRecycler.setAdapter(myAdapter);
+        }
+
         if (requestCode == LOCATION_REQUEST) {
             if (resultCode == RESULT_OK) {
 
@@ -164,6 +192,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // The user canceled the operation.
             }
         }
+
+
     }
     @Override
     public void onRequestPermissionsResult(int requestCode,

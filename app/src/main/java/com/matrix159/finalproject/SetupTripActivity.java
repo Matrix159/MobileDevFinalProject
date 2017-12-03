@@ -10,7 +10,7 @@ import android.view.View;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-/**
+/*
  * Use this activity to map a list of items to a location?
  */
 public class SetupTripActivity extends AppCompatActivity {
