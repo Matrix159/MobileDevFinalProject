@@ -39,6 +39,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int PERMISSION_REQUEST = 1;
     private static final int LOCATION_REQUEST = 2;
     static final int MAKE_ITEM_LIST = 3;
+    static final int SELECT_ITEMS_AND_TRIP = 4;
     private GoogleMap mMap;
     private FirebaseAuth auth;
     private DatabaseReference topRef;
@@ -70,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ArrayList<String> items = new ArrayList<>();
     double lat;
     double lng;
+    public HashMap<String, ArrayList<String>> itemListMapping = new HashMap<>();
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.recyclerView)
@@ -85,12 +88,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
 
-        items.add("Hello");
-        items.add("Hello");
-        items.add("Hello");
-        items.add("Hello");
-        items.add("Hello");
-
         //Set up the recycler view
         layoutManager = new LinearLayoutManager(this);
         itemsRecycler.setLayoutManager(layoutManager);
@@ -100,6 +97,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         geofenceList = new ArrayList<>();
         // Initially set the PendingIntent used in addGeofences() and removeGeofences() to null.
         mGeofencePendingIntent = null;
+
+        // TODO: For testing, remove later
+        ArrayList<String> lists = new ArrayList<>();
+        lists.add("hi");
+        lists.add("hi 2");
+        lists.add("hi 3");
+
+        itemListMapping.put("List", lists);
+        itemListMapping.put("List 2", lists);
+        itemListMapping.put("List 3", lists);
+        itemListMapping.put("List 4", lists);
+        itemListMapping.put("List 5", lists);
 
         auth = FirebaseAuth.getInstance();
         // Write a message to the database
@@ -152,16 +161,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @OnClick(R.id.build_location_button)
     public void buildLocation() {
         Intent intent = new Intent(this, SetupTripActivity.class);
-        startActivity(intent);
+        ArrayList<String> list = new ArrayList<>();
+        list.addAll(itemListMapping.keySet());
+        intent.putStringArrayListExtra("ItemLists", list);
+        startActivityForResult(intent, SELECT_ITEMS_AND_TRIP);
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Returned from making list of items
         if (resultCode == MAKE_ITEM_LIST){
-            items = data.getStringArrayListExtra("RecyclerItems");
-            //myAdapter.notifyDataSetChanged();
+            itemListMapping.put(data.getStringExtra("NameOfList"), data.getStringArrayListExtra("RecyclerItems"));
+        }
+
+        if (resultCode == SELECT_ITEMS_AND_TRIP){
+            // Use the string from the selected spinner as the key to set the new items in the list
+            items = itemListMapping.get(data.getStringExtra("ItemListKey"));
             myAdapter = new ItemAdapter(items);
             itemsRecycler.setAdapter(myAdapter);
+            //myAdapter.notifyDataSetChanged();
         }
 
         if (requestCode == LOCATION_REQUEST) {

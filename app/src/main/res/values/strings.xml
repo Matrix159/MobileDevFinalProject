@@ -3,7 +3,7 @@
     <string name="title_activity_main">Main</string>
     <string name="title_activity_login">Log In</string>
     <string name="title_activity_maps">Map</string>
-    <string name="title_activity_add_items">Add Location</string>
+    <string name="title_activity_add_items">Create New Item List</string>
     <string name="title_activity_trip">TripActivity</string>
     <string name="title_activity_setup_trip">SetupTripActivity</string>
     <string name="title_activity_list">ListActivity</string>
@@ -18,8 +18,9 @@
     <string name="sign_up">Sign Up</string>
     <string name="incorrect_password">Invalid password or username.</string>
     <string name="title_activity_add_location">AddLocationActivity</string>
-    <string name="edit_items_activity_welcome">Current trip items</string>
+    <string name="edit_items_activity_welcome">Current items</string>
     <string name="add_items">Add Item</string>
+    <string name="name_of_list_box">Name of Item List</string>
 
 
     <!-- Error strings -->

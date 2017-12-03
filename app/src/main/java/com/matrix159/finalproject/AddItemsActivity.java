@@ -34,6 +34,8 @@ public class AddItemsActivity extends AppCompatActivity {
     public ArrayList<String> items = new ArrayList<>();
     @BindView(R.id.add_items_recycler)
     RecyclerView itemsRecycler;
+    @BindView(R.id.name_of_list)
+    EditText nameItemList;
 
     LinearLayoutManager layoutManager;
     ItemAdapter myAdapter;
@@ -56,16 +58,34 @@ public class AddItemsActivity extends AppCompatActivity {
         itemsRecycler.setAdapter(myAdapter);
 
         fab.setOnClickListener(view -> {
-            items.add(addItemEdit.getText().toString());
-            myAdapter.notifyDataSetChanged();
+            if(!addItemEdit.getText().toString().equals("")){
+                items.add(addItemEdit.getText().toString());
+                myAdapter.notifyDataSetChanged();
+                addItemEdit.setText("");
+            }
         });
 
         // When they press the save button, send the data back to the main activity
         fab2.setOnClickListener(view -> {
-            Intent intent = new Intent();
-            intent.putExtra("RecyclerItems", items);
-            setResult(MainActivity.MAKE_ITEM_LIST, intent);
-            finish();
+            String message = "";
+            if(!nameItemList.getText().toString().equals("") && (items.size() != 0)){
+                Intent intent = new Intent();
+                intent.putExtra("NameOfList", nameItemList.getText().toString());
+                intent.putExtra("RecyclerItems", items);
+                setResult(MainActivity.MAKE_ITEM_LIST, intent);
+                finish();
+            }
+
+            if (nameItemList.getText().toString().equals("")){
+                message += "Please name your list. ";
+            }
+
+            if (items.size() == 0) {
+                message += "Please insert items into your list.";
+            }
+            Snackbar snackbar = Snackbar
+                    .make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG);
+            snackbar.show();
         });
 
 
