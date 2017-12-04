@@ -3,11 +3,4 @@
     <color name="colorPrimary">#3d5afe</color>
     <color name="colorPrimaryDark">#0031ca</color>
     <color name="colorAccent">#FF4081</color>
-
-    <color name="text">#ffffff</color>
-    <color name="background">#ff0000</color>
-    <color name="button_color">#000000</color>
-    <color name="button_text">#ff0000</color>
-    <color name="label_text">#ffffff</color>
-    <color name="header_text">#ffffff</color>
 </resources>
