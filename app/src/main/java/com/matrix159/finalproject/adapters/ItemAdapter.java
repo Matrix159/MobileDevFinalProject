@@ -1,4 +1,4 @@
-package com.matrix159.finalproject;
+package com.matrix159.finalproject.adapters;
 
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -9,7 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import com.matrix159.finalproject.R;
+
 import java.util.List;
 
 import butterknife.OnClick;
