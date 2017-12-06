@@ -10,9 +10,18 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.widget.EditText;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
+import com.google.firebase.database.ValueEventListener;
 import com.matrix159.finalproject.adapters.ItemAdapter;
+import com.matrix159.finalproject.models.Location;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -22,6 +31,9 @@ import butterknife.ButterKnife;
  */
 public class AddItemsActivity extends AppCompatActivity {
 
+    private FirebaseAuth auth;
+    private DatabaseReference topRef;
+    public ArrayList<String> itemList = new ArrayList<>();
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.fab)
@@ -30,11 +42,8 @@ public class AddItemsActivity extends AppCompatActivity {
     FloatingActionButton fab2;
     @BindView(R.id.add_items_edit_text)
     EditText addItemEdit;
-    public ArrayList<String> items = new ArrayList<>();
     @BindView(R.id.add_items_recycler)
     RecyclerView itemsRecycler;
-    @BindView(R.id.name_of_list)
-    EditText nameItemList;
 
     LinearLayoutManager layoutManager;
     ItemAdapter myAdapter;
@@ -50,41 +59,66 @@ public class AddItemsActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        // auth = FirebaseAuth.getInstance();
+        // FirebaseDatabase database = FirebaseDatabase.getInstance();
+        // topRef = database.getReference(auth.getUid() + "/locations");
+
+        // Get this list from firebase instead of passing it
+        itemList = getIntent().getExtras().getStringArrayList("ItemList");
+
         layoutManager = new LinearLayoutManager(this);
         itemsRecycler.setLayoutManager(layoutManager);
 
-        myAdapter = new ItemAdapter(items);
+        myAdapter = new ItemAdapter(itemList);
         itemsRecycler.setAdapter(myAdapter);
+
+        /** Read from the database
+        topRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                GenericTypeIndicator<List<String>> t = new GenericTypeIndicator<List<String>>() {};
+                List<String> snapshot = dataSnapshot.getValue(t);
+                if(snapshot != null) {
+                    itemList.clear();
+                    itemList.addAll(snapshot);
+                    myAdapter.notifyDataSetChanged();
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError error) {
+            }
+        });**/
 
         fab.setOnClickListener(view -> {
             if(!addItemEdit.getText().toString().equals("")){
-                items.add(addItemEdit.getText().toString());
-                myAdapter.notifyDataSetChanged();
-                addItemEdit.setText("");
+                // Check if the item is already in their list, if it is, don't add it
+                Boolean inList = false;
+                for (String s : itemList){
+                    if(addItemEdit.getText().toString().toLowerCase().equals(s.toLowerCase())){
+                        Snackbar snackbar = Snackbar
+                                .make(findViewById(android.R.id.content), "That item is already added", Snackbar.LENGTH_SHORT);
+                        snackbar.show();
+                        inList = true;
+                    }
+                }
+
+                if(!inList) {
+                    itemList.add(addItemEdit.getText().toString());
+                    myAdapter.notifyDataSetChanged();
+                    addItemEdit.setText("");
+                }
             }
         });
 
         // When they press the save button, send the data back to the main activity
         fab2.setOnClickListener(view -> {
-            String message = "";
-            if(!nameItemList.getText().toString().equals("") && (items.size() != 0)){
+            // Get all pressed buttons
+            if((itemList.size() != 0)){
                 Intent intent = new Intent();
-                intent.putExtra("NameOfList", nameItemList.getText().toString());
-                intent.putExtra("RecyclerItems", items);
+                intent.putExtra("RecyclerItems", itemList);
                 setResult(MainActivity.MAKE_ITEM_LIST, intent);
                 finish();
             }
-
-            if (nameItemList.getText().toString().equals("")){
-                message += "Please name your list. ";
-            }
-
-            if (items.size() == 0) {
-                message += "Please insert items into your list.";
-            }
-            Snackbar snackbar = Snackbar
-                    .make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG);
-            snackbar.show();
         });
 
 

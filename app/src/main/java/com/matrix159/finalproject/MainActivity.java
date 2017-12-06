@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     double lat;
     double lng;
     public HashMap<String, ArrayList<String>> itemListMapping = new HashMap<>();
+    ArrayList<String> listOfItems;
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.recyclerView)
@@ -92,22 +93,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         itemsRecycler.setLayoutManager(layoutManager);
         myAdapter = new ItemAdapter(items);
         itemsRecycler.setAdapter(myAdapter);
+        listOfItems = new ArrayList<>();
+
+        //Testing
+        listOfItems.add("item1");
+        listOfItems.add("item2");
+        listOfItems.add("item3");
+        listOfItems.add("item4");
+        listOfItems.add("item5");
+
 
         geofenceList = new ArrayList<>();
         // Initially set the PendingIntent used in addGeofences() and removeGeofences() to null.
         mGeofencePendingIntent = null;
-
-        // TODO: For testing, remove later
-        ArrayList<String> lists = new ArrayList<>();
-        lists.add("hi");
-        lists.add("hi 2");
-        lists.add("hi 3");
-
-        itemListMapping.put("List", lists);
-        itemListMapping.put("List 2", lists);
-        itemListMapping.put("List 3", lists);
-        itemListMapping.put("List 4", lists);
-        itemListMapping.put("List 5", lists);
 
         auth = FirebaseAuth.getInstance();
         // Write a message to the database
@@ -148,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @OnClick(R.id.editItems)
     public void editItems() {
         Intent intent = new Intent(MainActivity.this, AddItemsActivity.class);
+        intent.putStringArrayListExtra("ItemList", listOfItems);
         startActivityForResult(intent, MAKE_ITEM_LIST);
     }
 
@@ -160,16 +159,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @OnClick(R.id.build_location_button)
     public void buildLocation() {
         Intent intent = new Intent(this, SetupTripActivity.class);
-        ArrayList<String> list = new ArrayList<>();
-        list.addAll(itemListMapping.keySet());
-        intent.putStringArrayListExtra("ItemLists", list);
         startActivityForResult(intent, SELECT_ITEMS_AND_TRIP);
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Returned from making list of items
         if (resultCode == MAKE_ITEM_LIST){
-            itemListMapping.put(data.getStringExtra("NameOfList"), data.getStringArrayListExtra("RecyclerItems"));
+            listOfItems = data.getStringArrayListExtra("RecyclerItems");
         }
 
         if (resultCode == SELECT_ITEMS_AND_TRIP){

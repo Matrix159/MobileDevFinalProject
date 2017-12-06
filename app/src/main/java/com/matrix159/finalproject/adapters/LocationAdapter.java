@@ -1,6 +1,11 @@
 package com.matrix159.finalproject.adapters;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.support.constraint.ConstraintLayout;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,11 +16,14 @@ import com.matrix159.finalproject.models.Location;
 
 import java.util.List;
 
+import butterknife.BindView;
+
 public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHolder>{
 
     private List<Location> locations;
+    private SparseBooleanArray selectedItems = new SparseBooleanArray();
 
-    public static class ViewHolder extends RecyclerView.ViewHolder{
+    public class ViewHolder extends RecyclerView.ViewHolder{
         TextView locationName;
         TextView locationLatitude;
         TextView locationLongitude;
