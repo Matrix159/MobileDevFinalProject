@@ -1,4 +1,4 @@
-package com.matrix159.finalproject;
+package com.matrix159.finalproject.adapters;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.matrix159.finalproject.R;
 import com.matrix159.finalproject.models.Location;
 
 import java.util.List;

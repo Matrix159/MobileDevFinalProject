@@ -27,6 +27,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
+import com.matrix159.finalproject.adapters.LocationAdapter;
 import com.matrix159.finalproject.models.Location;
 
 import java.util.ArrayList;
