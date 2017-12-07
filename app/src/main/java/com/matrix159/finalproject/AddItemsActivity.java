@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.widget.EditText;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -59,12 +60,13 @@ public class AddItemsActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        // auth = FirebaseAuth.getInstance();
-        // FirebaseDatabase database = FirebaseDatabase.getInstance();
-        // topRef = database.getReference(auth.getUid() + "/locations");
+        auth = FirebaseAuth.getInstance();
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        topRef = database.getReference(auth.getUid() + "/items");
 
         // Get this list from firebase instead of passing it
-        itemList = getIntent().getExtras().getStringArrayList("ItemList");
+        // itemList = getIntent().getExtras().getStringArrayList("ItemList");
+        itemList = new ArrayList<>();
 
         layoutManager = new LinearLayoutManager(this);
         itemsRecycler.setLayoutManager(layoutManager);
@@ -72,7 +74,28 @@ public class AddItemsActivity extends AppCompatActivity {
         myAdapter = new ItemAdapter(itemList);
         itemsRecycler.setAdapter(myAdapter);
 
-        /** Read from the database
+        // Allows the items in the recycler view to be swiped away
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT)
+        {
+
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target)
+            {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir)
+            {
+                itemList.remove(viewHolder.getLayoutPosition());
+                myAdapter.notifyItemRemoved(viewHolder.getLayoutPosition());
+                topRef.setValue(itemList);
+            }
+        };
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        itemTouchHelper.attachToRecyclerView(itemsRecycler);
+
+        // Read from the database
         topRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -87,7 +110,7 @@ public class AddItemsActivity extends AppCompatActivity {
             @Override
             public void onCancelled(DatabaseError error) {
             }
-        });**/
+        });
 
         fab.setOnClickListener(view -> {
             if(!addItemEdit.getText().toString().equals("")){
@@ -103,7 +126,9 @@ public class AddItemsActivity extends AppCompatActivity {
                 }
 
                 if(!inList) {
+                    //itemList.add(addItemEdit.getText().toString());
                     itemList.add(addItemEdit.getText().toString());
+                    topRef.setValue(itemList);
                     myAdapter.notifyDataSetChanged();
                     addItemEdit.setText("");
                 }

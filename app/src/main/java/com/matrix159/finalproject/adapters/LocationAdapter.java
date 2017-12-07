@@ -21,7 +21,6 @@ import butterknife.BindView;
 public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHolder>{
 
     private List<Location> locations;
-    private SparseBooleanArray selectedItems = new SparseBooleanArray();
 
     public class ViewHolder extends RecyclerView.ViewHolder{
         TextView locationName;

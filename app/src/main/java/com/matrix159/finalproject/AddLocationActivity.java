@@ -128,6 +128,7 @@ public class AddLocationActivity extends AppCompatActivity {
             public void onCancelled(DatabaseError error) {
             }
         });
+
         ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT)
         {
 

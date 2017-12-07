@@ -4,8 +4,7 @@
     android:layout_height="wrap_content"
     android:id='@+id/myBackground'
     android:layout_marginTop="4dp"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="@drawable/select_item">
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
