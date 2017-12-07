@@ -207,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if (location != null) {
                             lat = location.getLatitude();
                             lng = location.getLongitude();
-                            geofenceList.add(getGeofence("locationName", lat, lng, 5));
+                            //geofenceList.add(getGeofence("locationName", lat, lng, 5));
                             currentGeofence = geofenceList.get(0);
                             SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                                     .findFragmentById(R.id.map);
@@ -312,11 +312,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .strokeColor(Color.TRANSPARENT)
                         .strokeWidth(2);
                 mMap.addCircle(circleOptions);
-                mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
-                Map<String, Object> userUpdates = new HashMap<>();
-                userUpdates.put("lat", lat);
-                userUpdates.put("lng", lng);
-                topRef.child("locationName").updateChildren(userUpdates);
+                mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
             }
         });
 
