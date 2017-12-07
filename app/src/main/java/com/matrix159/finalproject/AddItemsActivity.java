@@ -70,7 +70,6 @@ public class AddItemsActivity extends AppCompatActivity {
 
         layoutManager = new LinearLayoutManager(this);
         itemsRecycler.setLayoutManager(layoutManager);
-
         myAdapter = new ItemAdapter(itemList);
         itemsRecycler.setAdapter(myAdapter);
 

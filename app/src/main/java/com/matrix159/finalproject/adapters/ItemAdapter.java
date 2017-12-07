@@ -21,27 +21,12 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder>{
     private List<String> items;
     private SparseBooleanArray selectedItems = new SparseBooleanArray();
 
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    public class ViewHolder extends RecyclerView.ViewHolder{
         TextView item;
-        private CardView myBackground;
 
         public ViewHolder(View v){
             super(v);
-            v.setOnClickListener(this);
             item = v.findViewById(R.id.item_name_text);
-            myBackground = v.findViewById(R.id.myBackground);
-        }
-
-        @Override
-        public void onClick(View v) {
-            if (selectedItems.get(getAdapterPosition(), false)) {
-                selectedItems.delete(getAdapterPosition());
-                myBackground.setBackgroundResource(R.color.cardview_dark_background);
-            }
-            else {
-                selectedItems.put(getAdapterPosition(), true);
-                myBackground.setBackgroundResource(R.color.common_google_signin_btn_text_light_pressed);
-            }
         }
     }
 
@@ -63,7 +48,6 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder>{
     @Override
     public void onBindViewHolder(ViewHolder holder, int position){
         holder.item.setText(items.get(position));
-        holder.myBackground.setSelected(selectedItems.get(position, false));
     }
 
     // This for some reason

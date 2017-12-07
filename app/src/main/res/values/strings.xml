@@ -21,6 +21,7 @@
     <string name="edit_items_activity_welcome">Current items</string>
     <string name="add_items">Add Item</string>
     <string name="name_of_list_box">Name of Item List</string>
+    <string name="select_items_text">Select Items For Trip</string>
 
 
     <!-- Error strings -->

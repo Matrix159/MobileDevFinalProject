@@ -184,8 +184,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             itemListMapping.put(data.getStringExtra("NameOfList"), data.getStringArrayListExtra("RecyclerItems"));
         }*/
         if (resultCode == SELECT_ITEMS_AND_TRIP){
-            // Use the string from the selected spinner as the key to set the new items in the list
-            items = itemListMapping.get(data.getStringExtra("ItemListKey"));
+            // Set the main recycler view to the items selected in the setup trip activity
+            items = data.getStringArrayListExtra("SelectedItems");
             myAdapter = new ItemAdapter(items);
             itemsRecycler.setAdapter(myAdapter);
             //myAdapter.notifyDataSetChanged();
