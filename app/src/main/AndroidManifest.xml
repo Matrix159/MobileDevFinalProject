@@ -3,7 +3,7 @@
           package="com.matrix159.finalproject">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
     <!--android:label="@string/title_activity_login"-->
     <application
         android:allowBackup="true"
@@ -51,7 +51,8 @@
             android:theme="@style/AppTheme"
             android:parentActivityName=".MainActivity">
         </activity>
-
+        <service android:name=".services.GeofenceTransitionsIntentService"
+                 android:exported="true"/>
     </application>
 
 </manifest>
