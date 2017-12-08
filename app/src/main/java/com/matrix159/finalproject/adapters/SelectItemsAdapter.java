@@ -1,5 +1,6 @@
 package com.matrix159.finalproject.adapters;
 
+import android.graphics.Color;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseBooleanArray;
@@ -23,7 +24,7 @@ public class SelectItemsAdapter extends RecyclerView.Adapter<SelectItemsAdapter.
     private SparseBooleanArray selectedItems = new SparseBooleanArray();
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
-        TextView item;
+        private TextView item;
         private CardView myBackground;
 
         public ViewHolder(View v){
@@ -38,10 +39,12 @@ public class SelectItemsAdapter extends RecyclerView.Adapter<SelectItemsAdapter.
             if (selectedItems.get(getAdapterPosition(), false)) {
                 selectedItems.delete(getAdapterPosition());
                 myBackground.setBackgroundResource(R.color.cardview_dark_background);
+                item.setTextColor(Color.LTGRAY);
             }
             else {
                 selectedItems.put(getAdapterPosition(), true);
-                myBackground.setBackgroundResource(R.color.common_google_signin_btn_text_light_pressed);
+                myBackground.setBackgroundResource(R.color.colorAccent);
+                item.setTextColor(Color.WHITE);
             }
         }
     }
