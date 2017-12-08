@@ -20,6 +20,7 @@
     <string name="add_items">Add Item</string>
     <string name="name_of_list_box">Name of Item List</string>
     <string name="select_items_text">Select Items For Trip Location</string>
+    <string name="edit_locations_button_text">Edit Locations</string>
 
 
     <!-- Error strings -->

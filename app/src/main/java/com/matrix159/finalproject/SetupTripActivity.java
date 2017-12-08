@@ -83,7 +83,7 @@ public class SetupTripActivity extends AppCompatActivity implements AdapterView.
         tripsRef = database.getReference(auth.getUid() + "/trips");
 
 
-        ArrayAdapter<Location> spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, locations);
+        ArrayAdapter<Location> spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, locations);
         locationSpinner.setAdapter(spinnerAdapter);
 
         // Read from the database

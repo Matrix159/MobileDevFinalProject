@@ -39,8 +39,6 @@ public class AddItemsActivity extends AppCompatActivity {
     Toolbar toolbar;
     @BindView(R.id.fab)
     FloatingActionButton fab;
-    @BindView(R.id.fab2)
-    FloatingActionButton fab2;
     @BindView(R.id.add_items_edit_text)
     EditText addItemEdit;
     @BindView(R.id.add_items_recycler)
@@ -82,7 +80,6 @@ public class AddItemsActivity extends AppCompatActivity {
         // Get this list from firebase instead of passing it
         // itemList = getIntent().getExtras().getStringArrayList("ItemList");
         itemList = new ArrayList<>();
-
         layoutManager = new LinearLayoutManager(this);
         itemsRecycler.setLayoutManager(layoutManager);
         itemAdapter = new ItemAdapter(itemList);
@@ -131,18 +128,6 @@ public class AddItemsActivity extends AppCompatActivity {
                 }
             }
         });
-
-        // When they press the save button, send the data back to the main activity
-        fab2.setOnClickListener(view -> {
-            // Get all pressed buttons
-            if((itemList.size() != 0)){
-                Intent intent = new Intent();
-                intent.putExtra("RecyclerItems", itemList);
-                setResult(MainActivity.MAKE_ITEM_LIST, intent);
-                finish();
-            }
-        });
-
 
     }
 

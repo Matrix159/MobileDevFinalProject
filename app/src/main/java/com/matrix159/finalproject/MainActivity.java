@@ -121,8 +121,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir)
             {
-                //items.remove(viewHolder.getLayoutPosition());
-                //itemAdapter.notifyItemRemoved(viewHolder.getLayoutPosition());
+                items.remove(viewHolder.getLayoutPosition());
+                itemAdapter.notifyItemRemoved(viewHolder.getLayoutPosition());
                 //tr.setValue(itemList);
             }
         };
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     trips.clear();
                     trips.addAll(snapshot);
                 }
-                ArrayAdapter<Trip> spinnerAdapter = new ArrayAdapter<Trip>(MainActivity.this, android.R.layout.simple_spinner_item, trips);
+                ArrayAdapter<Trip> spinnerAdapter = new ArrayAdapter<Trip>(MainActivity.this, android.R.layout.simple_spinner_dropdown_item, trips);
                 spinner.setAdapter(spinnerAdapter);
                 if(trips.size() > 0) {
                     items.clear();
