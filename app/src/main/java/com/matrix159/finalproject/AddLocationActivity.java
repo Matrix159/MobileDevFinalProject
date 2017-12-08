@@ -74,7 +74,6 @@ public class AddLocationActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         auth = FirebaseAuth.getInstance();
-
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         topRef = database.getReference(auth.getUid() + "/locations");
 
@@ -93,6 +92,11 @@ public class AddLocationActivity extends AppCompatActivity {
             } catch(Exception ex) {
                 Snackbar.make(locationName, "Please enter a valid latitude and longitude", Snackbar.LENGTH_SHORT).show();
                 return;
+            }
+            for(Location location: locations) {
+                if(name.equalsIgnoreCase(location.getLocationName())) {
+                    Snackbar.make(locationName, "Cannot add a duplicate location", Snackbar.LENGTH_SHORT).show();
+                }
             }
             Location location = new Location(name, lat, lng);
             locations.add(location);
