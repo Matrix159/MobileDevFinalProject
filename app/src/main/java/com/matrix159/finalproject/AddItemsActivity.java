@@ -19,7 +19,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
 import com.matrix159.finalproject.adapters.ItemAdapter;
-import com.matrix159.finalproject.models.Location;
+import com.matrix159.finalproject.models.Item;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,8 +33,8 @@ import butterknife.ButterKnife;
 public class AddItemsActivity extends AppCompatActivity {
 
     private FirebaseAuth auth;
-    private DatabaseReference topRef;
-    public ArrayList<String> itemList = new ArrayList<>();
+    private DatabaseReference itemRef;
+    public ArrayList<Item> itemList;
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.fab)
@@ -47,7 +47,7 @@ public class AddItemsActivity extends AppCompatActivity {
     RecyclerView itemsRecycler;
 
     LinearLayoutManager layoutManager;
-    ItemAdapter myAdapter;
+    ItemAdapter itemAdapter;
 
 
     @Override
@@ -59,19 +59,34 @@ public class AddItemsActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
+        itemList = new ArrayList<>();
         auth = FirebaseAuth.getInstance();
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        topRef = database.getReference(auth.getUid() + "/items");
-
+        itemRef = database.getReference(auth.getUid() + "/items");
+        // Read from the database
+        itemRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                GenericTypeIndicator<List<Item>> t = new GenericTypeIndicator<List<Item>>() {};
+                List<Item> snapshot = dataSnapshot.getValue(t);
+                if(snapshot != null) {
+                    itemList.clear();
+                    itemList.addAll(snapshot);
+                    itemAdapter.notifyDataSetChanged();
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError error) {
+            }
+        });
         // Get this list from firebase instead of passing it
         // itemList = getIntent().getExtras().getStringArrayList("ItemList");
         itemList = new ArrayList<>();
 
         layoutManager = new LinearLayoutManager(this);
         itemsRecycler.setLayoutManager(layoutManager);
-        myAdapter = new ItemAdapter(itemList);
-        itemsRecycler.setAdapter(myAdapter);
+        itemAdapter = new ItemAdapter(itemList);
+        itemsRecycler.setAdapter(itemAdapter);
 
         // Allows the items in the recycler view to be swiped away
         ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT)
@@ -87,36 +102,19 @@ public class AddItemsActivity extends AppCompatActivity {
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir)
             {
                 itemList.remove(viewHolder.getLayoutPosition());
-                myAdapter.notifyItemRemoved(viewHolder.getLayoutPosition());
-                topRef.setValue(itemList);
+                itemAdapter.notifyItemRemoved(viewHolder.getLayoutPosition());
+                itemRef.setValue(itemList);
             }
         };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
         itemTouchHelper.attachToRecyclerView(itemsRecycler);
 
-        // Read from the database
-        topRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                GenericTypeIndicator<List<String>> t = new GenericTypeIndicator<List<String>>() {};
-                List<String> snapshot = dataSnapshot.getValue(t);
-                if(snapshot != null) {
-                    itemList.clear();
-                    itemList.addAll(snapshot);
-                    myAdapter.notifyDataSetChanged();
-                }
-            }
-            @Override
-            public void onCancelled(DatabaseError error) {
-            }
-        });
-
         fab.setOnClickListener(view -> {
             if(!addItemEdit.getText().toString().equals("")){
                 // Check if the item is already in their list, if it is, don't add it
                 Boolean inList = false;
-                for (String s : itemList){
-                    if(addItemEdit.getText().toString().toLowerCase().equals(s.toLowerCase())){
+                for (Item item : itemList){
+                    if(addItemEdit.getText().toString().equalsIgnoreCase(item.getItemName())){
                         Snackbar snackbar = Snackbar
                                 .make(findViewById(android.R.id.content), "That item is already added", Snackbar.LENGTH_SHORT);
                         snackbar.show();
@@ -126,9 +124,9 @@ public class AddItemsActivity extends AppCompatActivity {
 
                 if(!inList) {
                     //itemList.add(addItemEdit.getText().toString());
-                    itemList.add(addItemEdit.getText().toString());
-                    topRef.setValue(itemList);
-                    myAdapter.notifyDataSetChanged();
+                    itemList.add(new Item(addItemEdit.getText().toString(), false));
+                    itemRef.setValue(itemList);
+                    itemAdapter.notifyDataSetChanged();
                     addItemEdit.setText("");
                 }
             }

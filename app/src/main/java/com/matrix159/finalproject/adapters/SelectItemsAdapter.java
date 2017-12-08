@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.matrix159.finalproject.R;
+import com.matrix159.finalproject.models.Item;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ import java.util.List;
 
 public class SelectItemsAdapter extends RecyclerView.Adapter<SelectItemsAdapter.ViewHolder>{
 
-    private List<String> items;
+    private List<Item> items;
     private SparseBooleanArray selectedItems = new SparseBooleanArray();
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
@@ -46,7 +47,7 @@ public class SelectItemsAdapter extends RecyclerView.Adapter<SelectItemsAdapter.
     }
 
     // Create new views
-    public SelectItemsAdapter(List<String> items){
+    public SelectItemsAdapter(List<Item> items){
         this.items = items;
     }
 
@@ -62,7 +63,7 @@ public class SelectItemsAdapter extends RecyclerView.Adapter<SelectItemsAdapter.
     // Replace the contents
     @Override
     public void onBindViewHolder(SelectItemsAdapter.ViewHolder holder, int position){
-        holder.item.setText(items.get(position));
+        holder.item.setText(items.get(position).getItemName());
         holder.myBackground.setSelected(selectedItems.get(position, false));
     }
 

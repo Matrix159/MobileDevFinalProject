@@ -15,8 +15,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
@@ -39,8 +43,12 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
 import com.matrix159.finalproject.adapters.ItemAdapter;
+import com.matrix159.finalproject.models.Item;
+import com.matrix159.finalproject.models.Location;
+import com.matrix159.finalproject.models.Trip;
 import com.matrix159.finalproject.services.Constants;
 import com.matrix159.finalproject.services.GeofenceTransitionsIntentService;
 
@@ -53,7 +61,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, OnCompleteListener<Void> {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, OnCompleteListener<Void>, AdapterView.OnItemSelectedListener {
 
     public final static String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -62,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     static final int SELECT_ITEMS_AND_TRIP = 4;
     private GoogleMap mMap;
     private FirebaseAuth auth;
-    private DatabaseReference topRef;
+    private DatabaseReference tripsRef;
     private FirebaseAnalytics analytics;
     private GeofencingClient geofencingClient;
     private List<Geofence> geofenceList;
@@ -71,17 +79,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     /** Used when requesting to add or remove geofences */
     private PendingIntent geofencePendingIntent;
     private Geofence currentGeofence;
-    private ArrayList<String> items = new ArrayList<>();
+    private List<Item> items;
     double lat;
     double lng;
     public HashMap<String, ArrayList<String>> itemListMapping = new HashMap<>();
-    ArrayList<String> listOfItems;
+    List<Trip> trips;
+    Trip activeTrip;
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.recyclerView)
     RecyclerView itemsRecycler;
+    @BindView(R.id.main_spinner)
+    Spinner spinner;
     LinearLayoutManager layoutManager;
-    ItemAdapter myAdapter;
+    ItemAdapter itemAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,25 +101,36 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
-
+        trips = new ArrayList<>();
+        items = new ArrayList<>();
         //Set up the recycler view
         layoutManager = new LinearLayoutManager(this);
         itemsRecycler.setLayoutManager(layoutManager);
-        myAdapter = new ItemAdapter(items);
-        itemsRecycler.setAdapter(myAdapter);
-        listOfItems = new ArrayList<>();
+        itemAdapter = new ItemAdapter(items);
+        itemsRecycler.setAdapter(itemAdapter);
+        // Allows the items in the recycler view to be swiped away
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT)
+        {
 
-        //Testing
-        listOfItems.add("item1");
-        listOfItems.add("item2");
-        listOfItems.add("item3");
-        listOfItems.add("item4");
-        listOfItems.add("item5");
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target)
+            {
+                return false;
+            }
 
-
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir)
+            {
+                //items.remove(viewHolder.getLayoutPosition());
+                //itemAdapter.notifyItemRemoved(viewHolder.getLayoutPosition());
+                //tr.setValue(itemList);
+            }
+        };
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        itemTouchHelper.attachToRecyclerView(itemsRecycler);
+        spinner.setOnItemSelectedListener(this);
         // Setting up geofence crap
         geofenceList = new ArrayList<>();
-        populateGeofenceList();
         geofencePendingIntent = null;
         geofencingClient = LocationServices.getGeofencingClient(this);
 
@@ -116,26 +138,39 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         auth = FirebaseAuth.getInstance();
         // Write a message to the database
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        topRef = database.getReference(auth.getUid());
-        // Read from the database
-        topRef.addValueEventListener(new ValueEventListener() {
+        tripsRef = database.getReference(auth.getUid() + "/trips");
+        tripsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                // This method is called once with the initial value and again
-                // whenever data at this location is updated.
-                //String value = dataSnapshot.getValue(String.class);
-                //Log.d(TAG, "Value is: " + value);
+                GenericTypeIndicator<List<Trip>> t = new GenericTypeIndicator<List<Trip>>() {};
+                List<Trip> snapshot = dataSnapshot.getValue(t);
+                if(snapshot != null) {
+                    trips.clear();
+                    trips.addAll(snapshot);
+                }
+                ArrayAdapter<Trip> spinnerAdapter = new ArrayAdapter<Trip>(MainActivity.this, android.R.layout.simple_spinner_item, trips);
+                spinner.setAdapter(spinnerAdapter);
+                if(trips.size() > 0) {
+                    items.clear();
+                    Trip trip = trips.get(0);
+                    Location location = trip.getLocation();
+                    items.addAll(trip.getItems());
+                    itemAdapter.notifyDataSetChanged();
+                    geofenceList.clear();
+                    geofenceList.add(getGeofence(location.getLocationName(), location.getLatitude(), location.getLongitude(), Constants.GEOFENCE_RADIUS_IN_METERS));
+                    removeGeofences();
+                    addGeofences();
+                }
             }
 
             @Override
-            public void onCancelled(DatabaseError error) {
-                // Failed to read value
-                //Log.w(TAG, "Failed to read value.", error.toException());
+            public void onCancelled(DatabaseError databaseError) {
+
             }
         });
-
         analytics = FirebaseAnalytics.getInstance(this);
 
+        // TODO: Gotta make sure we have permissions before doing location stuff.
         locationClient = LocationServices.getFusedLocationProviderClient(this);
         /*if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -144,7 +179,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }*/
 
-
+        if (!checkPermissions()) {
+            requestPermissions();
+            return;
+        }
         MapFragment mapFragment = (MapFragment) getFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -156,17 +194,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onStart();
         if (!checkPermissions()) {
             requestPermissions();
-        } else {
+        } /*else {
             removeGeofences();
             addGeofences();
-        }
+        }*/
     }
 
     @OnClick(R.id.editItems)
     public void editItems() {
         Intent intent = new Intent(MainActivity.this, AddItemsActivity.class);
-        intent.putStringArrayListExtra("ItemList", listOfItems);
-        startActivityForResult(intent, MAKE_ITEM_LIST);
+        //intent.putStringArrayListExtra("ItemList", listOfItems);
+        startActivity(intent);
     }
 
     @OnClick(R.id.main_add_location)
@@ -178,21 +216,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @OnClick(R.id.build_location_button)
     public void buildLocation() {
         Intent intent = new Intent(this, SetupTripActivity.class);
-        startActivityForResult(intent, SELECT_ITEMS_AND_TRIP);
+        startActivity(intent);
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        /*// Returned from making list of items
-        if (resultCode == MAKE_ITEM_LIST){
-            itemListMapping.put(data.getStringExtra("NameOfList"), data.getStringArrayListExtra("RecyclerItems"));
-        }*/
-        if (resultCode == SELECT_ITEMS_AND_TRIP){
-            // Set the main recycler view to the items selected in the setup trip activity
-            items = data.getStringArrayListExtra("SelectedItems");
-            myAdapter = new ItemAdapter(items);
-            itemsRecycler.setAdapter(myAdapter);
-            //myAdapter.notifyDataSetChanged();
-        }
+
     }
     @Override
     @SuppressWarnings("MissingPermission")
@@ -203,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    geofencingClient = LocationServices.getGeofencingClient(this);
+                    //geofencingClient = LocationServices.getGeofencingClient(this);
                     locationClient.getLastLocation().addOnSuccessListener(this, location ->
                     {
                         // Got last known location. In some rare situations this can be null.
@@ -211,7 +239,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             lat = location.getLatitude();
                             lng = location.getLongitude();
                             //geofenceList.add(getGeofence("locationName", lat, lng, 5));
-                            currentGeofence = geofenceList.get(0);
+                            //currentGeofence = geofenceList.get(0);
                             SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                                     .findFragmentById(R.id.map);
                             mapFragment.getMapAsync(this);
@@ -304,9 +332,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 lat = location.getLatitude();
                 lng = location.getLongitude();
                 //geofenceList.add(getGeofence("locationName", lat, lng, 5));
-                currentGeofence = geofenceList.get(0);
+                //currentGeofence = geofenceList.get(0);
                 LatLng marker = new LatLng(lat, lng);
-                mMap.addMarker(new MarkerOptions().position(marker).title(currentGeofence.getRequestId()));
+                mMap.addMarker(new MarkerOptions().position(marker).title("Current Location"));
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(marker));
                 CircleOptions circleOptions = new CircleOptions()
                         .center(marker)
@@ -315,7 +343,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .strokeColor(Color.TRANSPARENT)
                         .strokeWidth(2);
                 mMap.addCircle(circleOptions);
-                mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
+                mMap.animateCamera(CameraUpdateFactory.zoomTo(17));
             }
         });
 
@@ -328,10 +356,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Manifest.permission.ACCESS_FINE_LOCATION);
         return permissionState == PackageManager.PERMISSION_GRANTED;
     }
-
-
-
-
 
     private void requestPermissions() {
         Log.i(TAG, "Requesting permission");
@@ -464,5 +488,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     // Create the geofence.
                     .build());
         }
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        Trip trip = trips.get(position);
+        List<Item> wantedItems = trip.getItems();
+        Location location = trip.getLocation();
+
+        items.clear();
+        items.addAll(wantedItems);
+        itemAdapter.notifyDataSetChanged();
+        geofenceList.clear();
+        geofenceList.add(getGeofence(location.getLocationName(), location.getLatitude(), location.getLongitude(), Constants.GEOFENCE_RADIUS_IN_METERS));
+        removeGeofences();
+        addGeofences();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+        return;
     }
 }

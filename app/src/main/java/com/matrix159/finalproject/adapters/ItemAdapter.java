@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.matrix159.finalproject.R;
+import com.matrix159.finalproject.models.Item;
 
 import java.util.List;
 
@@ -18,8 +19,7 @@ import java.util.List;
 
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder>{
 
-    private List<String> items;
-    private SparseBooleanArray selectedItems = new SparseBooleanArray();
+    private List<Item> items;
 
     public class ViewHolder extends RecyclerView.ViewHolder{
         TextView item;
@@ -31,7 +31,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder>{
     }
 
     // Create new views
-    public ItemAdapter(List<String> items){
+    public ItemAdapter(List<Item> items){
         this.items = items;
     }
 
@@ -47,7 +47,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder>{
     // Replace the contents
     @Override
     public void onBindViewHolder(ViewHolder holder, int position){
-        holder.item.setText(items.get(position));
+        holder.item.setText(items.get(position).getItemName());
     }
 
     // This for some reason
