@@ -32,4 +32,9 @@ public class Item {
     public void setChecked(boolean checked) {
         this.checked = checked;
     }
+
+    @Override
+    public String toString() {
+        return itemName;
+    }
 }

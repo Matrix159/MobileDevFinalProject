@@ -48,6 +48,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.matrix159.finalproject.adapters.ItemAdapter;
 import com.matrix159.finalproject.models.Item;
 import com.matrix159.finalproject.models.Location;
+import com.matrix159.finalproject.models.Overall;
 import com.matrix159.finalproject.models.Trip;
 import com.matrix159.finalproject.services.Constants;
 import com.matrix159.finalproject.services.GeofenceTransitionsIntentService;
@@ -55,7 +56,7 @@ import com.matrix159.finalproject.services.GeofenceTransitionsIntentService;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.ListIterator;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -65,26 +66,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public final static String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
-    private static final int LOCATION_REQUEST = 2;
-    static final int MAKE_ITEM_LIST = 3;
-    static final int SELECT_ITEMS_AND_TRIP = 4;
     private GoogleMap mMap;
     private FirebaseAuth auth;
-    private DatabaseReference tripsRef;
+    private DatabaseReference overallRef;
+    private DatabaseReference activeTripRef;
     private FirebaseAnalytics analytics;
     private GeofencingClient geofencingClient;
     private List<Geofence> geofenceList;
     private FusedLocationProviderClient locationClient;
 
-    /** Used when requesting to add or remove geofences */
+    /**
+     * Used when requesting to add or remove geofences
+     */
     private PendingIntent geofencePendingIntent;
-    private Geofence currentGeofence;
     private List<Item> items;
+    private Overall overall;
     double lat;
     double lng;
     public HashMap<String, ArrayList<String>> itemListMapping = new HashMap<>();
     List<Trip> trips;
-    Trip activeTrip;
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.recyclerView)
@@ -109,20 +109,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         itemAdapter = new ItemAdapter(items);
         itemsRecycler.setAdapter(itemAdapter);
         // Allows the items in the recycler view to be swiped away
-        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT)
-        {
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
 
             @Override
-            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target)
-            {
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
                 return false;
             }
 
             @Override
-            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir)
-            {
-                items.remove(viewHolder.getLayoutPosition());
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+
+                Item itemRemoved = items.remove(viewHolder.getLayoutPosition());
                 itemAdapter.notifyItemRemoved(viewHolder.getLayoutPosition());
+                for (final ListIterator<Trip> i = overall.getTrips().listIterator(); i.hasNext();) {
+                    final Trip trip = i.next();
+                    if(trip.toString().equalsIgnoreCase(overall.getActiveTrip().toString())) {
+                        Trip updatedTrip = new Trip(trip.getLocation(), items);
+                        i.set(updatedTrip);
+                        break;
+                    }
+                }
+                for (final ListIterator<Item> i = overall.getActiveTrip().getItems().listIterator(); i.hasNext();) {
+                    final Item item = i.next();
+                    if(item.toString().equalsIgnoreCase(itemRemoved.toString())) {
+                        i.remove();
+                        break;
+                    }
+                }
+                overallRef.setValue(overall);
                 //tr.setValue(itemList);
             }
         };
@@ -138,28 +152,48 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         auth = FirebaseAuth.getInstance();
         // Write a message to the database
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        tripsRef = database.getReference(auth.getUid() + "/trips");
-        tripsRef.addValueEventListener(new ValueEventListener() {
+        overallRef = database.getReference(auth.getUid());
+        overallRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                GenericTypeIndicator<List<Trip>> t = new GenericTypeIndicator<List<Trip>>() {};
-                List<Trip> snapshot = dataSnapshot.getValue(t);
-                if(snapshot != null) {
-                    trips.clear();
-                    trips.addAll(snapshot);
-                }
-                ArrayAdapter<Trip> spinnerAdapter = new ArrayAdapter<Trip>(MainActivity.this, android.R.layout.simple_spinner_dropdown_item, trips);
-                spinner.setAdapter(spinnerAdapter);
-                if(trips.size() > 0) {
-                    items.clear();
-                    Trip trip = trips.get(0);
-                    Location location = trip.getLocation();
-                    items.addAll(trip.getItems());
-                    itemAdapter.notifyDataSetChanged();
-                    geofenceList.clear();
-                    geofenceList.add(getGeofence(location.getLocationName(), location.getLatitude(), location.getLongitude(), Constants.GEOFENCE_RADIUS_IN_METERS));
-                    removeGeofences();
-                    addGeofences();
+                GenericTypeIndicator<Overall> t = new GenericTypeIndicator<Overall>() {};
+                overall = dataSnapshot.getValue(t);
+                if (overall != null) {
+                    if (overall.getTrips() != null) {
+                        trips.clear();
+                        trips.addAll(overall.getTrips());
+                        ArrayAdapter<Trip> spinnerAdapter = new ArrayAdapter<Trip>(MainActivity.this, android.R.layout.simple_spinner_dropdown_item, trips);
+                        spinner.setAdapter(spinnerAdapter);
+
+                        if (overall.getActiveTrip() != null) {
+                            Trip activeTrip = overall.getActiveTrip();
+                            for (int i = 0; i < trips.size(); i++) {
+                                if (activeTrip.toString().equalsIgnoreCase(trips.get(i).toString())) {
+                                    spinner.setSelection(i);
+                                    break;
+                                }
+                            }
+                            Location location = activeTrip.getLocation();
+                            items.clear();
+                            items.addAll(activeTrip.getItems());
+                            itemAdapter.notifyDataSetChanged();
+                            geofenceList.clear();
+                            geofenceList.add(getGeofence(location.getLocationName(), location.getLatitude(), location.getLongitude(), Constants.GEOFENCE_RADIUS_IN_METERS));
+                            removeGeofences();
+                            addGeofences();
+                        }
+                        else if (overall.getTrips().size() > 0) {
+                            Trip trip = overall.getTrips().get(0);
+                            Location location = trip.getLocation();
+                            items.clear();
+                            items.addAll(trip.getItems());
+                            itemAdapter.notifyDataSetChanged();
+                            geofenceList.clear();
+                            geofenceList.add(getGeofence(location.getLocationName(), location.getLatitude(), location.getLongitude(), Constants.GEOFENCE_RADIUS_IN_METERS));
+                            removeGeofences();
+                            addGeofences();
+                        }
+                    }
                 }
             }
 
@@ -168,6 +202,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             }
         });
+        activeTripRef = database.getReference(auth.getUid() + "/activeTrip");
         analytics = FirebaseAnalytics.getInstance(this);
 
         // TODO: Gotta make sure we have permissions before doing location stuff.
@@ -218,10 +253,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Intent intent = new Intent(this, SetupTripActivity.class);
         startActivity(intent);
     }
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-    }
+
     @Override
     @SuppressWarnings("MissingPermission")
     public void onRequestPermissionsResult(int requestCode,
@@ -229,8 +262,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         switch (requestCode) {
             case REQUEST_PERMISSIONS_REQUEST_CODE: {
                 // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     //geofencingClient = LocationServices.getGeofencingClient(this);
                     locationClient.getLastLocation().addOnSuccessListener(this, location ->
                     {
@@ -245,30 +277,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             mapFragment.getMapAsync(this);
                         }
                     });
-                } else {
-                        // Permission denied.
-                        // Notify the user via a SnackBar that they have rejected a core permission for the
-                        // app, which makes the Activity useless. In a real app, core permissions would
-                        // typically be best requested during a welcome-screen flow.
+                }
+                else {
+                    // Permission denied.
+                    // Notify the user via a SnackBar that they have rejected a core permission for the
+                    // app, which makes the Activity useless. In a real app, core permissions would
+                    // typically be best requested during a welcome-screen flow.
 
-                        // Additionally, it is important to remember that a permission might have been
-                        // rejected without asking the user for permission (device policy or "Never ask
-                        // again" prompts). Therefore, a user interface affordance is typically implemented
-                        // when permissions are denied. Otherwise, your app could appear unresponsive to
-                        // touches or interactions which have required permissions.
-                        showSnackbar(R.string.permission_denied_explanation, R.string.settings,
-                                view -> {
-                                    // Build intent that displays the App settings screen.
-                                    Intent intent = new Intent();
-                                    intent.setAction(
-                                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                    Uri uri = Uri.fromParts("package",
-                                            BuildConfig.APPLICATION_ID, null);
-                                    intent.setData(uri);
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    startActivity(intent);
-                                });
-                    }
+                    // Additionally, it is important to remember that a permission might have been
+                    // rejected without asking the user for permission (device policy or "Never ask
+                    // again" prompts). Therefore, a user interface affordance is typically implemented
+                    // when permissions are denied. Otherwise, your app could appear unresponsive to
+                    // touches or interactions which have required permissions.
+                    showSnackbar(R.string.permission_denied_explanation, R.string.settings,
+                            view -> {
+                                // Build intent that displays the App settings screen.
+                                Intent intent = new Intent();
+                                intent.setAction(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                Uri uri = Uri.fromParts("package",
+                                        BuildConfig.APPLICATION_ID, null);
+                                intent.setData(uri);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                            });
+                }
             }
         }
     }
@@ -313,6 +346,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
                 .build();
     }
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -325,6 +359,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @SuppressWarnings("MissingPermission")
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        if (!checkPermissions()) {
+            requestPermissions();
+            return;
+        }
         locationClient.getLastLocation().addOnSuccessListener(this, location ->
         {
             // Got last known location. In some rare situations this can be null.
@@ -348,6 +386,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
     }
+
     /**
      * Return the current state of the permissions needed.
      */
@@ -366,6 +405,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                 REQUEST_PERMISSIONS_REQUEST_CODE);
     }
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -458,41 +498,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    /**
-     * This sample hard codes geofence data. A real app might dynamically create geofences based on
-     * the user's location.
-     */
-    private void populateGeofenceList() {
-        for (Map.Entry<String, LatLng> entry : Constants.BAY_AREA_LANDMARKS.entrySet()) {
-
-            geofenceList.add(new Geofence.Builder()
-                    // Set the request ID of the geofence. This is a string to identify this
-                    // geofence.
-                    .setRequestId(entry.getKey())
-
-                    // Set the circular region of this geofence.
-                    .setCircularRegion(
-                            entry.getValue().latitude,
-                            entry.getValue().longitude,
-                            Constants.GEOFENCE_RADIUS_IN_METERS
-                    )
-
-                    // Set the expiration duration of the geofence. This geofence gets automatically
-                    // removed after this period of time.
-                    .setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
-
-                    // Set the transition types of interest. Alerts are only generated for these
-                    // transition. We track entry and exit transitions in this sample.
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
-
-                    // Create the geofence.
-                    .build());
-        }
-    }
-
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         Trip trip = trips.get(position);
+        overall.setActiveTrip(trip);
+        overallRef.setValue(overall);
         List<Item> wantedItems = trip.getItems();
         Location location = trip.getLocation();
 
