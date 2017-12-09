@@ -362,19 +362,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (location != null) {
                 lat = location.getLatitude();
                 lng = location.getLongitude();
-                //geofenceList.add(getGeofence("locationName", lat, lng, 5));
-                //currentGeofence = geofenceList.get(0);
                 LatLng marker = new LatLng(lat, lng);
                 mMap.addMarker(new MarkerOptions().position(marker).title("Current Location"));
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(marker));
                 CircleOptions circleOptions = new CircleOptions()
                         .center(marker)
-                        .radius(5)
+                        .radius(Constants.GEOFENCE_RADIUS_IN_METERS)
                         .fillColor(Color.GREEN)
                         .strokeColor(Color.TRANSPARENT)
                         .strokeWidth(2);
                 mMap.addCircle(circleOptions);
-                mMap.animateCamera(CameraUpdateFactory.zoomTo(17));
+                mMap.animateCamera(CameraUpdateFactory.zoomTo(14f));
             }
         });
 
