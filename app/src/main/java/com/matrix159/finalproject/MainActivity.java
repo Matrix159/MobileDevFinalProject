@@ -227,18 +227,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onStart() {
         super.onStart();
-        if (!checkPermissions()) {
-            requestPermissions();
-        } /*else {
-            removeGeofences();
-            addGeofences();
-        }*/
     }
 
     @OnClick(R.id.editItems)
     public void editItems() {
         Intent intent = new Intent(MainActivity.this, AddItemsActivity.class);
-        //intent.putStringArrayListExtra("ItemList", listOfItems);
         startActivity(intent);
     }
 
@@ -272,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             lng = location.getLongitude();
                             //geofenceList.add(getGeofence("locationName", lat, lng, 5));
                             //currentGeofence = geofenceList.get(0);
-                            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                            MapFragment mapFragment = (MapFragment) getFragmentManager()
                                     .findFragmentById(R.id.map);
                             mapFragment.getMapAsync(this);
                         }
