@@ -1,19 +1,3 @@
-/*
- * Copyright 2017 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.matrix159.finalproject.services;
 
 import android.app.IntentService;
@@ -85,7 +69,23 @@ public class GeofenceTransitionsIntentService extends IntentService {
                     triggeringGeofences);
 
             // Send notification and log the transition details.
-            sendNotification("Did you forget some items?");
+            ArrayList<String> itemList = intent.getStringArrayListExtra("items");
+            if(itemList != null && itemList.size() > 1) {
+                StringBuilder builder = new StringBuilder();
+                if((itemList.size() - 1) == 1) {
+                    builder.append("Did you forget ").append(itemList.get(0)).append(" +").append(1)
+                            .append(" more item?");
+                    sendNotification(builder.toString());
+                } else {
+                    builder.append("Did you forget ").append(itemList.get(0)).append(" +").append(itemList.size() - 1)
+                            .append(" more items?");
+                    sendNotification(builder.toString());
+                }
+
+            } else if(itemList != null && itemList.size() > 0) {
+                sendNotification("Did you forget " + itemList.get(0) + "?");
+            }
+            //sendNotification("Did you forget some items?");
             Log.i(TAG, geofenceTransitionDetails);
         } else {
             // Log the error.
