@@ -1,16 +1,23 @@
 package com.matrix159.finalproject;
 
 import android.Manifest;
+import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -25,6 +32,7 @@ import android.widget.Spinner;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
+import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -468,7 +476,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public void onComplete(@NonNull Task<Void> task) {
-
+        System.out.println("hu");
     }
 
     /**
@@ -484,9 +492,54 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return geofencePendingIntent;
         }
         Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
+
+        //TODO: I AM SO CONFUSED THERE'S NO WAY THIS WILL WORK
+        GeofenceTransitionsIntentService test = new GeofenceTransitionsIntentService("yes");
+        test.onHandleIntent(intent);
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling
         // addGeofences() and removeGeofences().
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    public class GeofenceTransitionsIntentService extends IntentService{
+        /**
+         * Creates an IntentService.  Invoked by your subclass's constructor.
+         *
+         * @param name Used to name the worker thread, important only for debugging.
+         */
+        public GeofenceTransitionsIntentService(String name) {
+            super(name);
+        }
+
+        @Override
+        protected void onHandleIntent(@Nullable Intent intent) {
+            try {
+                GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
+                // Get the transition type.
+                int geofenceTransition = geofencingEvent.getGeofenceTransition();
+
+                // Test that the reported transition was of interest.
+                if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+                    // Check the size of the recycler view, if it's low send notification
+                    sendNotification();
+
+                }
+            } catch (NullPointerException e){
+                // Error
+            }
+        }
+    }
+
+    public void sendNotification(){
+        NotificationManager NM;
+        NM = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        Notification notify = new Notification(android.R.drawable.stat_notify_more, "Notification", System.currentTimeMillis());
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(), 0);
+
+        //notify.setLatestEventInfo(getApplicationContext(), "Text", "more text", pendingIntent);
+        NM.notify(0, notify);
     }
 
     @Override
@@ -505,6 +558,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         removeGeofences();
         addGeofences();
     }
+
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
